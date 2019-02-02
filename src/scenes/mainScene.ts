@@ -8,6 +8,7 @@ export class MainScene extends Phaser.Scene {
   private goal: Phaser.GameObjects.Sprite;
   private enemy: Phaser.GameObjects.Sprite & { speed?: number };
   private enemies: Phaser.GameObjects.Group;
+  private gameEnded: boolean = false;
 
   constructor() {
     super({
@@ -21,6 +22,7 @@ export class MainScene extends Phaser.Scene {
     this.enemyMaxSpeed = 3;
     this.enemyMinY = 80;
     this.enemyMaxY = 280;
+    this.gameEnded = false;
   }
 
   preload(): void {
@@ -80,6 +82,7 @@ export class MainScene extends Phaser.Scene {
   }
 
   update(): void {
+    if (this.gameEnded) return;
     if (this.input.activePointer.isDown) {
       // player walks
       this.player.x += this.playerSpeed;
@@ -89,8 +92,7 @@ export class MainScene extends Phaser.Scene {
     let treasureRect = this.goal.getBounds();
 
     if (Phaser.Geom.Intersects.RectangleToRectangle(playerRect, treasureRect)) {
-      console.log("yay!");
-      this.scene.restart();
+      this.gameOver();
     }
 
     const enemies = this.enemies.getChildren();
@@ -109,9 +111,19 @@ export class MainScene extends Phaser.Scene {
       let enemyRect = enemy.getBounds();
 
       if (Phaser.Geom.Intersects.RectangleToRectangle(playerRect, enemyRect)) {
-        console.log("GAME OVEEEEER");
-        this.scene.restart();
+        this.gameOver();
       }
+    });
+  }
+
+  private gameOver() {
+    this.gameEnded = true;
+    this.cameras.main.shake(500);
+
+    this.cameras.main.on("camerashakecomplete", () => {
+      this.cameras.main.fade(500).on("camerafadeoutcomplete", () => {
+        this.scene.restart();
+      });
     });
   }
 }
